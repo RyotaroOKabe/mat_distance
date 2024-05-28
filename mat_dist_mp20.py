@@ -59,7 +59,7 @@ def calculate_similarity(features1, features2):
 
 #%%
 # load data
-diffcsp_dir = '/home/rokabe/data2/generative/DiffCSP_v1'
+diffcsp_dir = './'
 datadir = join(diffcsp_dir, 'data/mp_20')   #!
 file =  join(datadir, 'test.csv')
 print("datadir: ", datadir)

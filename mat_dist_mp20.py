@@ -26,32 +26,32 @@ def str2pmg(cif):
 def generate_magpie_features(formula):
     """
     Generate Magpie features for a given material formula.
-    
+
     Args:
     - formula (str): Chemical formula of the material.
-    
+
     Returns:
     - np.array: Array of Magpie features.
     """
     # Initialize the Magpie feature generator
     ep = ElementProperty.from_preset(preset_name="magpie")
-    
+
     # Create a Composition object
     comp = Composition(formula)
-    
+
     # Generate features
     features = ep.featurize(comp)
-    
+
     return np.array(features).reshape(1, -1)
 
 def calculate_similarity(features1, features2):
     """
     Calculate the cosine similarity between two feature vectors.
-    
+
     Args:
     - features1 (np.array): Feature vector for material 1.
     - features2 (np.array): Feature vector for material 2.
-    
+
     Returns:
     - float: Cosine similarity score.
     """
@@ -62,11 +62,12 @@ def calculate_similarity(features1, features2):
 diffcsp_dir = './'
 datadir = join(diffcsp_dir, 'data/mp_20')   #!
 file =  join(datadir, 'test.csv')
+num_sample = 500
 print("datadir: ", datadir)
 # Load Strucutres from csv file (either from train, val, test)
 df0 = pd.read_csv(file)
 # randompy sample 2000 datapoints
-df0 = df0.sample(5000).reset_index(drop=True)
+df0 = df0.sample(num_sample).reset_index(drop=True)
 pstruct_dict_db = {df0['material_id'][i]: str2pmg(df0['cif'][i]) for i in range(len(df0))}
 pstruct_list_db = list(pstruct_dict_db.values())
 mpids_db = list(pstruct_dict_db.keys())
@@ -78,7 +79,7 @@ with MPRester(API_KEY) as mpr:
         CrystalNNFingerprint.from_preset('ops', distance_cutoffs=None, x_diff_weight=0),
         stats=('mean', 'std_dev', 'minimum', 'maximum')
     )
-    
+
     # Initialize an empty DataFrame
     df = pd.DataFrame()
 
@@ -99,17 +100,17 @@ with MPRester(API_KEY) as mpr:
 
             sga = SpacegroupAnalyzer(pstruct)
             sg = sga.get_space_group_number()
-            
+
             # get the lattice type like 'cubic', 'hexagonal', etc.
             lattice_type = sga.get_lattice_type()
 
             # store all info as pandas dataframe
             new_row = pd.DataFrame({
-                'mpid': [mpid], 
-                'composition': [comp], 
-                'spacegroup': [sg], 
+                'mpid': [mpid],
+                'composition': [comp],
+                'spacegroup': [sg],
                 'lattice_type': [lattice_type],
-                'cnn_features': [v_cnn], 
+                'cnn_features': [v_cnn],
                 'magpie_features': [comp_feature]
             })
             df = pd.concat([df, new_row], ignore_index=True)
@@ -141,6 +142,7 @@ plt.xlabel('PC1')
 plt.ylabel('PC2')
 plt.title('PCA of CNN features')
 plt.show()
+plt.savefig(f'./figures/cnn_map{num_sample}.png')
 
 #%%
 # PCA analysis for data in df['magpie_features']
@@ -162,6 +164,7 @@ plt.xlabel('PC1')
 plt.ylabel('PC2')
 plt.title('PCA of CNN features')
 plt.show()
+plt.savefig(f'./figures/mgp_map{num_sample}.png')
 
 #%%
 # concatenate cnn_features and magpie_features, then do pca analysis
@@ -183,6 +186,7 @@ plt.xlabel('PC1')
 plt.ylabel('PC2')
 plt.title('PCA of CNN and Magpie features')
 plt.show()
+plt.savefig(f'./figures/cnn_mgp_map{num_sample}.png')
 
 
 
